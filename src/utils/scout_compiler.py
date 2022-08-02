@@ -144,12 +144,14 @@ class scoutCompiler:
         self.scout_folder   = scout_dir
 
         # Ends with "/scout" (and not "/scout/")
-        if scout_dir.endswith(os.path.sep + "scout"):
+        if scout_dir.endswith(f"{os.path.sep}scout"):
             main_folder = os.path.sep.join(scout_dir.split(os.path.sep)[:-1])
         else:
             main_folder = scout_dir + os.path.sep + ".."
 
-        self.target_arc.compile_flags += ['I' + x for x in [self.project_folder, main_folder] + include_dirs]
+        self.target_arc.compile_flags += [
+            f'I{x}' for x in [self.project_folder, main_folder] + include_dirs
+        ]
 
     def addScoutFlags(self, flags):
         """Add the flags regarding the target's specifications.
@@ -186,21 +188,19 @@ class scoutCompiler:
 
         flag_path = os.path.join(self.project_folder, FLAGS_FILE_NAME)
         self.logger.info(f"Generating the {flag_path} file")
-        fd = open(flag_path, "w")
-        # file prefix
-        fd.write("#ifndef __SCOUT__FLAGS__H__\n")
-        fd.write("#define __SCOUT__FLAGS__H__\n")
-        fd.write('\n')
-        # auto-generation comment
-        fd.write("/* This file is AUTO-GENERATED, please do NOT edit it manually */\n")
-        # The actual flags
-        for flag in self.config_flags:
-            fd.write(f"#define {flag}\n")
-        # file suffix
-        fd.write("\n")
-        fd.write("#endif /* _SCOUT__FLAGS__H__ */")
-        # can close the file
-        fd.close()
+        with open(flag_path, "w") as fd:
+            # file prefix
+            fd.write("#ifndef __SCOUT__FLAGS__H__\n")
+            fd.write("#define __SCOUT__FLAGS__H__\n")
+            fd.write('\n')
+            # auto-generation comment
+            fd.write("/* This file is AUTO-GENERATED, please do NOT edit it manually */\n")
+            # The actual flags
+            for flag in self.config_flags:
+                fd.write(f"#define {flag}\n")
+            # file suffix
+            fd.write("\n")
+            fd.write("#endif /* _SCOUT__FLAGS__H__ */")
 
     def populateGOT(self, scout_got, project_got, project_vars_size=0, is_host_thumb=False):
         """Populate the PIC context with the GOT entries, and capacity for global variables.
@@ -228,16 +228,18 @@ class scoutCompiler:
         # Calculate the size for the global variables
         size_globals = project_vars_size
         # The base loaders don't use global variables, only the full scout
-        if flag_loader not in self.config_flags:
-            if flag_instructions in self.config_flags:
-                if self.is_32_bits:
-                    size_globals += scout_instructions_globals_32_size
-                    if flag_dynamic_buffers not in self.config_flags:
-                        size_globals += scout_static_buffers_32_size
-                else:
-                    size_globals += scout_instructions_globals_64_size
-                    if flag_dynamic_buffers not in self.config_flags:
-                        size_globals += scout_static_buffers_64_size
+        if (
+            flag_loader not in self.config_flags
+            and flag_instructions in self.config_flags
+        ):
+            if self.is_32_bits:
+                size_globals += scout_instructions_globals_32_size
+                if flag_dynamic_buffers not in self.config_flags:
+                    size_globals += scout_static_buffers_32_size
+            else:
+                size_globals += scout_instructions_globals_64_size
+                if flag_dynamic_buffers not in self.config_flags:
+                    size_globals += scout_static_buffers_64_size
         # Now generate the blob
         self.global_vars = b'\x00' * size_globals
 
@@ -272,7 +274,7 @@ class scoutCompiler:
 
         if not self.is_pic:
             # 4. Re-organize the linker flags
-            fixed_link_flags = "".join("-Wl,-" + x for x in link_flags.split("-")[1:])
+            fixed_link_flags = "".join(f"-Wl,-{x}" for x in link_flags.split("-")[1:])
 
             # 5. Compile together all of the file (and that's it)
             self.logger.info(f"Compiling the *.c files, linking them together and creating: {elf_file}")
@@ -301,10 +303,8 @@ class scoutCompiler:
         # c) Our strings are very specific, so they (probably) won't conflict with something else
         self.logger.info("Fixing the *.S files to work around GCC's bugs")
         for s_file in s_files:
-            fd = open(s_file, "r")
-            content_lines = fd.readlines()
-            fd.close()
-
+            with open(s_file, "r") as fd:
+                content_lines = fd.readlines()
             new_content_lines = []
             for content in content_lines:
                 # Makes sure that only our special "_start" will be at the beginning of the compiled blob
@@ -318,10 +318,8 @@ class scoutCompiler:
                 # save the modified line
                 new_content_lines.append(content)
 
-            fd = open(s_file, "w")
-            fd.writelines(new_content_lines)
-            fd.close()
-
+            with open(s_file, "w") as fd:
+                fd.writelines(new_content_lines)
         # 6. Generate all of the *.o files
         self.logger.info("Compiling the *.S files")
         o_files = []
@@ -338,7 +336,7 @@ class scoutCompiler:
         if elf_file.split('.')[-1].lower() == "elf":
             binary_file = '.'.join(elf_file.split('.')[:-1] + ['bin'])
         else:
-            binary_file = elf_file + ".bin"
+            binary_file = f"{elf_file}.bin"
         self.logger.info(f"Extracting the final binary to: {binary_file}")
         systemLine(f"{self.target_arc.objcopy_path} -O binary -j .text -j .rodata {' '.join(self.target_arc.objcopy_flags)} {elf_file} {binary_file}", self.logger)
 

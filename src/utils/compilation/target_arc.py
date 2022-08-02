@@ -77,6 +77,6 @@ class targetArc:
 
     def prepareFlags(self):
         """Prepare the compilation and linking flags to be passed on to the compiler."""
-        compile_flags = ' '.join(['-' + x for x in self.compile_flags])
-        link_flags    = ' '.join(['-' + x for x in self.link_flags])
+        compile_flags = ' '.join([f'-{x}' for x in self.compile_flags])
+        link_flags = ' '.join([f'-{x}' for x in self.link_flags])
         return compile_flags, link_flags

@@ -42,11 +42,8 @@ def placeContext(got, globals, binary_file, logger):
         binary_file (string): path to the PIC binary that will host the context
         logger (logger): (elementals) logger
     """
-    # 1. Open the file (read)
-    fd = open(binary_file, "rb")
-    raw_binary = fd.read()
-    fd.close()
-
+    with open(binary_file, "rb") as fd:
+        raw_binary = fd.read()
     # 2. Locate the GOT
     got_start = raw_binary.find(GOT_START_MARKER)
     got_end   = raw_binary.find(GOT_END_MARKER) + len(GOT_END_MARKER)
@@ -65,9 +62,6 @@ def placeContext(got, globals, binary_file, logger):
     logger.info("Placing the generated context in it's place")
     pic_binary = raw_binary[:got_start] + wanted_context + raw_binary[got_end:]
 
-    # 5. Open the file (write)
-    fd = open(binary_file, "wb")
-    fd.write(pic_binary)
-    fd.close()
-
+    with open(binary_file, "wb") as fd:
+        fd.write(pic_binary)
     logger.info(f"Complete PIC binary was saved to: {binary_file}")

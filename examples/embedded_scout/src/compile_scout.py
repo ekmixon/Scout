@@ -17,9 +17,9 @@ EMBEDDED_SCOUT_ELF  = 'embedded_scout.elf'
 
 TARGET_ARCH         = ARC_ARM
 # Is Little Endian
-TARGET_ENDIANNESS   = True if TARGET_ARCH == ARC_INTEL else False
+TARGET_ENDIANNESS = TARGET_ARCH == ARC_INTEL
 # Is 32 bits?
-TARGET_BITNESS      = True if TARGET_ARCH != ARC_INTEL else False
+TARGET_BITNESS = TARGET_ARCH != ARC_INTEL
 # Should the loader use mmap()?
 LOADER_USE_MMAP     = True  # False means we will use malloc() for the loader's memory allocation
 
